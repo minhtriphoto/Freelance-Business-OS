@@ -1,0 +1,6 @@
+{
+  "name": "Freelance Business OS",
+  "description": "Hệ điều hành quản trị công việc, khách hàng, báo giá, tiền cọc, thu chi và tính thuế tự động dành cho freelancer media & creative tại Việt Nam.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
