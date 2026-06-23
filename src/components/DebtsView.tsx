@@ -141,9 +141,11 @@ export default function DebtsView({
   const clientsMap = useMemo(() => new Map(clients.map(c => [c.id, c])), [clients]);
   const metadataMap = useMemo(() => new Map(debtMetadatas.map(m => [m.projectId, m])), [debtMetadatas]);
 
-  // Today parsing (Fixed mockup date is 2026-05-26 as per local metadata)
-  const todayDateStr = '2026-05-26';
-  const todayDate = new Date(todayDateStr);
+  const actualToday = new Date();
+  const getYYYYMMDD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  
+  const todayDateStr = getYYYYMMDD(actualToday);
+  const todayDate = actualToday;
 
   // Hợp nhất dữ liệu công nợ sinh tự động từ Job (Projects), Hợp đồng (Contracts), Báo giá (Quotations)
   const debtsList = useMemo(() => {

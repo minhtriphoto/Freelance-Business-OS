@@ -18,6 +18,7 @@ import DebtsView from './components/DebtsView';
 import AppointmentsView from './components/AppointmentsView';
 import ReportsView from './components/ReportsView';
 import SettingsView from './components/SettingsView';
+import AiAssistant from './components/AiAssistant';
 import { 
   Briefcase, 
   Users, 
@@ -45,7 +46,57 @@ import { motion, AnimatePresence } from 'motion/react';
 
 export default function App() {
   const [currentTab, setCurrentTab] = useState<string>('dashboard');
-  
+
+  // Custom Confirmation & Alert Dialog States
+  const [customConfirm, setCustomConfirm] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    confirmText: string;
+    cancelText: string;
+    isDanger: boolean;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const [customAlert, setCustomAlert] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+  } | null>(null);
+
+  const triggerConfirm = (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    isDanger = false,
+    confirmText = 'Đồng ý',
+    cancelText = 'Hủy bỏ'
+  ) => {
+    setCustomConfirm({
+      isOpen: true,
+      title,
+      message,
+      confirmText,
+      cancelText,
+      isDanger,
+      onConfirm: () => {
+        onConfirm();
+        setCustomConfirm(null);
+      }
+    });
+  };
+
+  const triggerAlert = (title: string, message: string) => {
+    setCustomAlert({
+      isOpen: true,
+      title,
+      message
+    });
+  };
+
+
+
+
   // State quản lý dự án được nhắm mục tiêu để sửa nhanh từ dashboard alert
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
 
@@ -132,6 +183,7 @@ export default function App() {
     localStorage.setItem('freelance_os_debt_metadatas', JSON.stringify(debtMetadatas));
   }, [debtMetadatas]);
 
+
   const handleUpdateDebtMetadata = (projectId: string, statusOverride?: DebtStatus, remindNotes?: string) => {
     setDebtMetadatas(prev => {
       const exists = prev.find(m => m.projectId === projectId);
@@ -164,7 +216,17 @@ export default function App() {
   };
 
   const handleDeleteAppointment = (id: string) => {
-    setAppointments(prev => prev.filter(apt => apt.id !== id));
+
+    const apt = appointments.find(a => a.id === id);
+    const title = apt ? `"${apt.title}"` : 'lịch hẹn này';
+    triggerConfirm(
+      'Xác nhận xóa lịch hẹn',
+      `Bạn có chắc chắn muốn xóa ${title}? Thao tác này sẽ xóa vĩnh viễn dữ liệu khỏi lịch trình.`,
+      () => {
+        setAppointments(prev => prev.filter(item => item.id !== id));
+      },
+      true
+    );
   };
 
   // 3. CÁC HÀM XỬ LÝ KHÁCH HÀNG (CLIENT CRUD)
@@ -174,7 +236,17 @@ export default function App() {
   };
 
   const handleDeleteClient = (id: string) => {
-    setClients(prev => prev.filter(c => c.id !== id));
+
+    const client = clients.find(c => c.id === id);
+    const name = client ? `"${client.name}"` : 'khách hàng này';
+    triggerConfirm(
+      'Kiểm duyệt xóa khách hàng',
+      `Bạn có thực sự muốn xóa khách hàng ${name}? Mọi thông tin liên hệ và ghi chú sẽ bị mất sạch.`,
+      () => {
+        setClients(prev => prev.filter(c => c.id !== id));
+      },
+      true
+    );
   };
 
   // CÁC HÀM XỬ LÝ BÁO GIÁ (QUOTATION CRUD)
@@ -191,7 +263,17 @@ export default function App() {
   };
 
   const handleDeleteQuotation = (id: string) => {
-    setQuotations(prev => prev.filter(q => q.id !== id));
+
+    const q = quotations.find(item => item.id === id);
+    const label = q ? `"${q.quoteNumber}"` : 'báo giá này';
+    triggerConfirm(
+      'Kiểm duyệt xóa báo giá',
+      `Xác nhận bạn muốn xóa báo giá ${label}?`,
+      () => {
+        setQuotations(prev => prev.filter(item => item.id !== id));
+      },
+      true
+    );
   };
 
   // CÁC HÀM XỬ LÝ HỢP ĐỒNG (CONTRACT CRUD)
@@ -208,7 +290,17 @@ export default function App() {
   };
 
   const handleDeleteContract = (id: string) => {
-    setContracts(prev => prev.filter(c => c.id !== id));
+
+    const c = contracts.find(item => item.id === id);
+    const label = c ? `"${c.contractNumber || c.title}"` : 'hợp đồng này';
+    triggerConfirm(
+      'Kiểm duyệt xóa hợp đồng',
+      `Bạn có chắc chắn muốn xóa hợp đồng ${label}? Các điều khoản số dư bổ sung sẽ biến mất.`,
+      () => {
+        setContracts(prev => prev.filter(item => item.id !== id));
+      },
+      true
+    );
   };
 
   // 4. CÁC HÀM XỬ LÝ DỰ ÁN (PROJECT CRUD)
@@ -286,7 +378,17 @@ export default function App() {
   };
 
   const handleDeleteProject = (id: string) => {
-    setProjects(prev => prev.filter(p => p.id !== id));
+
+    const p = projects.find(item => item.id === id);
+    const label = p ? `"${p.title}"` : 'dự án này';
+    triggerConfirm(
+      'Cảnh báo nghiêm trọng',
+      `Bạn đang thực hiện xóa hoàn toàn Job ${label} và toàn bộ thông tin thanh toán mỏ neo liên quan. Bạn có chắc chắn muốn tiếp tục không?`,
+      () => {
+        setProjects(prev => prev.filter(item => item.id !== id));
+      },
+      true
+    );
   };
 
   // 5. CÁC HÀM XỬ LÝ GIAO DỊCH (TRANSACTION CRUD)
@@ -375,13 +477,23 @@ export default function App() {
   };
 
   const handleDeleteTransaction = (id: string) => {
-    const transToDelete = transactions.find(t => t.id === id);
-    const updated = transactions.filter(t => t.id !== id);
-    setTransactions(updated);
 
-    if (transToDelete?.projectId) {
-      syncProjectsWithTransactions([transToDelete.projectId], updated);
-    }
+    const t = transactions.find(item => item.id === id);
+    const label = t ? `"${t.transactionNumber} - ${formatVND(t.amount)}"` : 'giao dịch này';
+    triggerConfirm(
+      'Kiểm duyệt hạch toán',
+      `Bạn có chắc chắn muốn xóa phát sinh tài chính ${label}? Cân đối Sổ quỹ sẽ bị thay đổi.`,
+      () => {
+        const transToDelete = transactions.find(item => item.id === id);
+        const updated = transactions.filter(item => item.id !== id);
+        setTransactions(updated);
+
+        if (transToDelete?.projectId) {
+          syncProjectsWithTransactions([transToDelete.projectId], updated);
+        }
+      },
+      true
+    );
   };
 
   // 6. XỬ LÝ KHAI THUẾ JOB (TAX TOGGLE)
@@ -396,29 +508,75 @@ export default function App() {
 
   // 7. TIỆN ÍCH DỮ LIỆU (RESET / CLEANUP)
   const handleResetToDemo = () => {
-    if (confirm('Bạn có chắc muốn khôi phục lại dữ liệu mẫu Sandbox ban đầu không? Mọi thay đổi hiện tại của bạn sẽ bị ghi đè.')) {
-      setClients(INITIAL_CLIENTS);
-      setProjects(INITIAL_PROJECTS);
-      setTransactions(INITIAL_TRANSACTIONS);
-      setQuotations(INITIAL_QUOTATIONS);
-      setContracts(INITIAL_CONTRACTS);
-      setDebtMetadatas([]);
-      setAppointments(INITIAL_APPOINTMENTS);
-      setCurrentTab('dashboard');
-    }
+    triggerConfirm(
+      'Khôi phục dữ liệu mẫu',
+      'Bạn có chắc chắn muốn khôi phục lại dữ liệu mẫu Sandbox ban đầu không? Mọi thay đổi hiện tại của bạn sẽ bị ghi đè, và các thiết lập thương hiệu/dịch vụ cũng được đưa về mặc định.',
+      () => {
+        // Clear all local storages first to ensure it fully boots up afresh
+        localStorage.removeItem('freelance_os_clients');
+        localStorage.removeItem('freelance_os_projects');
+        localStorage.removeItem('freelance_os_transactions');
+        localStorage.removeItem('freelance_os_quotations');
+        localStorage.removeItem('freelance_os_contracts');
+        localStorage.removeItem('freelance_os_debt_metadatas');
+        localStorage.removeItem('freelance_os_appointments');
+        
+        // Clear settings states too
+        localStorage.removeItem('freelance_os_profile_settings');
+        localStorage.removeItem('freelance_os_services_settings');
+        localStorage.removeItem('freelance_os_templates_settings');
+        localStorage.removeItem('freelance_os_statuses_settings');
+
+        setClients(JSON.parse(JSON.stringify(INITIAL_CLIENTS)));
+        setProjects(JSON.parse(JSON.stringify(INITIAL_PROJECTS)));
+        setTransactions(JSON.parse(JSON.stringify(INITIAL_TRANSACTIONS)));
+        setQuotations(JSON.parse(JSON.stringify(INITIAL_QUOTATIONS)));
+        setContracts(JSON.parse(JSON.stringify(INITIAL_CONTRACTS)));
+        setDebtMetadatas([]);
+        setAppointments(JSON.parse(JSON.stringify(INITIAL_APPOINTMENTS)));
+        setCurrentTab('dashboard');
+
+        // Let it reload gracefully to avoid state mismatch or stale values
+        setTimeout(() => {
+          window.location.reload();
+        }, 150);
+      },
+      false,
+      'Khôi phục ngay',
+      'Đóng'
+    );
   };
 
   const handleCleanSlate = () => {
-    if (confirm('Cảnh báo! Thao tác này sẽ xóa sạch toàn bộ khách bè, dự án và sổ quỹ để bạn thiết lập hệ điều hành từ đầu. Bạn có chắc không?')) {
-      setClients([]);
-      setProjects([]);
-      setTransactions([]);
-      setQuotations([]);
-      setContracts([]);
-      setDebtMetadatas([]);
-      setAppointments([]);
-      setCurrentTab('dashboard');
-    }
+    triggerConfirm(
+      'Cảnh báo: Xóa trống toàn bộ dữ liệu',
+      'Thao tác này sẽ xóa sạch toàn bộ khách hàng, dự án, sổ quỹ, báo giá và lịch hẹn để bạn thiết lập hệ điều hành từ đầu. Bạn có chắc chắn muốn xóa không?',
+      () => {
+        localStorage.setItem('freelance_os_clients', JSON.stringify([]));
+        localStorage.setItem('freelance_os_projects', JSON.stringify([]));
+        localStorage.setItem('freelance_os_transactions', JSON.stringify([]));
+        localStorage.setItem('freelance_os_quotations', JSON.stringify([]));
+        localStorage.setItem('freelance_os_contracts', JSON.stringify([]));
+        localStorage.setItem('freelance_os_debt_metadatas', JSON.stringify([]));
+        localStorage.setItem('freelance_os_appointments', JSON.stringify([]));
+
+        setClients([]);
+        setProjects([]);
+        setTransactions([]);
+        setQuotations([]);
+        setContracts([]);
+        setDebtMetadatas([]);
+        setAppointments([]);
+        setCurrentTab('dashboard');
+
+        setTimeout(() => {
+          window.location.reload();
+        }, 150);
+      },
+      true,
+      'Xóa sạch',
+      'Hủy'
+    );
   };
 
   // Trực quan tab nội dung
@@ -430,6 +588,7 @@ export default function App() {
             projects={projects}
             clients={clients}
             transactions={transactions}
+                                    onEditProject={handleEditProject}
             onNavigate={(tab) => {
               setCurrentTab(tab);
               setIsMobileMenuOpen(false);
@@ -447,7 +606,7 @@ export default function App() {
             projects={projects}
             clients={clients}
             transactions={transactions}
-            onAddTransaction={handleAddTransaction}
+                        onAddTransaction={handleAddTransaction}
             onAddProject={handleAddProject}
             onEditProject={handleEditProject}
             onDeleteProject={handleDeleteProject}
@@ -540,7 +699,7 @@ export default function App() {
             appointments={appointments}
             projects={projects}
             clients={clients}
-            onAddAppointment={handleAddAppointment}
+                        onAddAppointment={handleAddAppointment}
             onUpdateAppointment={handleUpdateAppointment}
             onDeleteAppointment={handleDeleteAppointment}
           />
@@ -742,7 +901,7 @@ export default function App() {
       </aside>
 
       {/* 2. TOP BAR TRÊN MOBILE (ẨN TRÊN DESKTOP) */}
-      <header className="md:hidden bg-brand-green-dark text-white p-4 flex items-center justify-between sticky top-0 z-40 shadow-md">
+      <header className="md:hidden bg-brand-green-dark text-white h-14 px-4 flex items-center justify-between sticky top-0 z-40 shadow-md">
         <div className="flex items-center gap-2">
           <span className="bg-brand-accent p-1.5 rounded-lg text-white">
             <Layers size={16} />
@@ -768,9 +927,9 @@ export default function App() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="md:hidden bg-brand-green-dark text-white border-b border-brand-green-light/20 absolute left-0 right-0 z-30 shadow-xl"
+            className="md:hidden bg-brand-green-dark text-white border-b border-brand-green-light/20 fixed top-14 left-0 right-0 z-30 shadow-xl max-h-[calc(100dvh-3.5rem)] overflow-y-auto pb-4"
           >
-            <nav className="p-4 space-y-1">
+            <nav className="p-4 pb-8 space-y-1">
               <button
                 onClick={() => { setCurrentTab('dashboard'); setIsMobileMenuOpen(false); }}
                 className={`w-full text-left px-4 py-2.5 rounded-lg text-xs font-bold flex items-center gap-3 ${
@@ -859,7 +1018,8 @@ export default function App() {
               >
                 <Settings size={15} /> Cài đặt & Thiết lập
               </button>
-              
+
+
               <div className="pt-3 border-t border-white/10 grid grid-cols-2 gap-2 text-center text-[10px]">
                 <button
                   onClick={handleResetToDemo}
@@ -950,6 +1110,70 @@ export default function App() {
 
       {/* To ensure the bottom nav doesn't overlap on mobile layout */}
       <div className="md:hidden h-16 shrink-0 pointer-events-none"></div>
+
+      {/* 6. CUSTOM CONFIRM DIALOG MODAL */}
+      {customConfirm && customConfirm.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[9999] animate-fadeIn">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm md:max-w-md w-full shadow-2.5xl space-y-4">
+            <div className="flex items-start gap-3">
+              <div className={`p-2 rounded-xl shrink-0 ${customConfirm.isDanger ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-slate-100 text-brand-green-mid border border-slate-200'}`}>
+                {customConfirm.isDanger ? <Trash2 size={20} /> : <RefreshCw size={20} className="animate-spin" style={{ animationDuration: '3s' }} />}
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">{customConfirm.title}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed font-semibold">{customConfirm.message}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setCustomConfirm(null)}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 bg-white rounded-xl transition-all cursor-pointer"
+              >
+                {customConfirm.cancelText || 'Hủy bỏ'}
+              </button>
+              <button
+                type="button"
+                onClick={customConfirm.onConfirm}
+                className={`px-4 py-2 text-white text-xs font-bold rounded-xl active:scale-95 transition-all cursor-pointer ${
+                  customConfirm.isDanger
+                    ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-200 shadow-md'
+                    : 'bg-brand-green-dark hover:bg-brand-green-mid shadow-slate-100 shadow-md'
+                }`}
+              >
+                {customConfirm.confirmText || 'Đồng ý'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 7. CUSTOM ALERT DIALOG MODAL */}
+      {customAlert && customAlert.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[9999] animate-fadeIn">
+          <div className="bg-white border border-slate-100 rounded-3xl p-6 max-w-sm w-full shadow-2.5xl text-center space-y-4">
+            <div className="mx-auto w-12 h-12 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center border border-rose-100">
+              <Lock size={22} className="animate-bounce" />
+            </div>
+            <div className="space-y-1.5">
+              <h4 className="text-sm font-black text-slate-950 uppercase tracking-tight">{customAlert.title}</h4>
+              <p className="text-xs text-slate-500 leading-relaxed font-semibold">{customAlert.message}</p>
+            </div>
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => setCustomAlert(null)}
+                className="w-full py-2 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer"
+              >
+                Đồng ý
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Assistant Chat Component */}
+      <AiAssistant />
 
     </div>
   );

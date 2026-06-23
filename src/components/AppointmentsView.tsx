@@ -52,8 +52,15 @@ export default function AppointmentsView({
   onUpdateAppointment,
   onDeleteAppointment
 }: AppointmentsViewProps) {
+  // Setup actual dynamic dates
+  const realToday = new Date();
+  const getYYYYMMDD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const getYYYYMMDDTHHMM = (d: Date) => `${getYYYYMMDD(d)}T${String(d.getHours()).padStart(2, '0')}:00`;
+
+  const realTodayStr = getYYYYMMDD(realToday);
+
   // Calendar Navigation Dates
-  const [currentDate, setCurrentDate] = useState<Date>(new Date('2026-05-26')); // Align with metadata mockup date
+  const [currentDate, setCurrentDate] = useState<Date>(realToday);
   const [calendarView, setCalendarView] = useState<'month' | 'week' | 'day' | 'agenda'>('month');
 
   // Filters state
@@ -62,7 +69,7 @@ export default function AppointmentsView({
   const [filterStatus, setFilterStatus] = useState<string>('all');
 
   // Selected Day in month view
-  const [selectedDayStr, setSelectedDayStr] = useState<string>('2026-05-26');
+  const [selectedDayStr, setSelectedDayStr] = useState<string>(realTodayStr);
 
   // Modals state
   const [formModalOpen, setFormModalOpen] = useState(false);
@@ -73,8 +80,13 @@ export default function AppointmentsView({
   const [clientId, setClientId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [type, setType] = useState<AppointmentType>('Tư vấn');
-  const [startDateStr, setStartDateStr] = useState('2026-05-26T10:00');
-  const [endDateStr, setEndDateStr] = useState('2026-05-26T11:00');
+  
+  const [startDateStr, setStartDateStr] = useState(getYYYYMMDDTHHMM(realToday));
+  
+  const h1Later = new Date(realToday);
+  h1Later.setHours(h1Later.getHours() + 1);
+  const [endDateStr, setEndDateStr] = useState(getYYYYMMDDTHHMM(h1Later));
+
   const [location, setLocation] = useState('');
   const [onlineMeetingLink, setOnlineMeetingLink] = useState('');
   const [notes, setNotes] = useState('');
@@ -84,9 +96,9 @@ export default function AppointmentsView({
   const clientsMap = useMemo(() => new Map(clients.map(c => [c.id, c])), [clients]);
   const projectsMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
 
-  // Exact mockup today parameter
-  const todayStr = '2026-05-26';
-  const todayDate = new Date(todayStr);
+  // Actual today tracking
+  const todayStr = realTodayStr;
+  const todayDate = realToday;
 
   // Filtered Appointments
   const filteredAppointments = useMemo(() => {
@@ -459,20 +471,21 @@ export default function AppointmentsView({
             
             {/* MONTH VIEW CALENDAR */}
             {calendarView === 'month' && (
-              <div>
-                {/* Weekday headers */}
-                <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50 text-center py-2.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
-                  <div>T2</div>
-                  <div>T3</div>
-                  <div>T4</div>
-                  <div>T5</div>
-                  <div>T6</div>
-                  <div>T7</div>
-                  <div className="text-rose-500">CN</div>
-                </div>
+              <div className="overflow-x-auto">
+                <div className="min-w-[700px]">
+                  {/* Weekday headers */}
+                  <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50 text-center py-2.5 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+                    <div>T2</div>
+                    <div>T3</div>
+                    <div>T4</div>
+                    <div>T5</div>
+                    <div>T6</div>
+                    <div>T7</div>
+                    <div className="text-rose-500">CN</div>
+                  </div>
 
-                {/* Days Grid */}
-                <div className="grid grid-cols-7 grid-rows-6 divide-x divide-y divide-slate-100 min-h-[440px] text-xs">
+                  {/* Days Grid */}
+                  <div className="grid grid-cols-7 grid-rows-6 divide-x divide-y divide-slate-100 min-h-[440px] text-xs">
                   {calendarCells.map((cell, idx) => {
                     const meetings = appointmentsByDate[cell.dateStr] || [];
                     const isSelectedVal = selectedDayStr === cell.dateStr;
@@ -544,14 +557,17 @@ export default function AppointmentsView({
                     );
                   })}
                 </div>
+                </div>
               </div>
             )}
 
             {/* WEEK VIEW CALENDAR */}
             {calendarView === 'week' && (
-              <div className="divide-y divide-slate-100 text-xs">
-                {/* Headers */}
-                <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50 text-center py-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
+              <div className="overflow-x-auto">
+                <div className="min-w-[700px]">
+                  <div className="divide-y divide-slate-100 text-xs">
+                    {/* Headers */}
+                    <div className="grid grid-cols-7 border-b border-slate-100 bg-slate-50/50 text-center py-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                   {currentWeekDays.map(wd => (
                     <div key={wd.dateStr} className={wd.isToday ? 'text-brand-green-mid bg-emerald-50/10' : ''}>
                       <p>{getVietnameseDayName(wd.date.getDay())}</p>
@@ -629,6 +645,8 @@ export default function AppointmentsView({
                       </div>
                     );
                   })}
+                </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -1068,10 +1086,10 @@ export default function AppointmentsView({
       {/* CREATE & EDIT FORM MODAL CONTAINER */}
       {formModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-120 text-xs">
+          <div className="bg-white rounded-2xl max-w-xl w-full shadow-2xl overflow-hidden border border-slate-100 animate-in fade-in zoom-in-95 duration-120 text-xs flex flex-col max-h-[90vh]">
             
             {/* Header */}
-            <div className="bg-slate-900 text-white p-4 flex items-center justify-between">
+            <div className="bg-slate-900 text-white p-4 flex items-center justify-between shrink-0">
               <div>
                 <h3 className="text-sm font-black uppercase tracking-wider">
                   {editingAppointment ? 'Chỉnh Sửa Lịch Hẹn' : 'Lập Kế Hoạch Lịch Hẹn Mới'}
@@ -1082,14 +1100,14 @@ export default function AppointmentsView({
               </div>
               <button
                 onClick={() => setFormModalOpen(false)}
-                className="p-1 hover:bg-white/10 rounded-lg text-white"
+                className="p-1 hover:bg-white/10 rounded-lg text-white shrink-0"
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
               
               {/* Title Field */}
               <div className="space-y-1">

@@ -24,9 +24,11 @@ import {
   Tag,
   Clock,
   DollarSign,
-  Undo
+  Undo,
+  Cloud
 } from 'lucide-react';
 import { formatVND } from '../utils';
+import SettingsSyncTab from './SettingsSyncTab';
 
 // Types for settings state
 export interface ProfileSettings {
@@ -67,8 +69,30 @@ export interface StatusesSetting {
 }
 
 export default function SettingsView() {
-  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'services' | 'templates' | 'statuses'>('profile');
+  const [activeSubTab, setActiveSubTab] = useState<'profile' | 'services' | 'templates' | 'statuses' | 'sync'>('profile');
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
+
+  // Custom confirmation dialog state
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    isDanger?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
+
+  const triggerConfirmSettings = (title: string, message: string, onConfirm: () => void, isDanger = false) => {
+    setConfirmDialog({
+      isOpen: true,
+      title,
+      message,
+      isDanger,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmDialog(null);
+      }
+    });
+  };
 
   // --- 1. PROFILE SETTINGS ---
   const [profile, setProfile] = useState<ProfileSettings>(() => {
@@ -165,9 +189,14 @@ export default function SettingsView() {
   };
 
   const handleDeleteService = (id: string) => {
-    if (confirm("Bạn có chắc muốn xóa dịch vụ này khỏi danh mục mặc định? (Sẽ không ảnh hưởng các Job lịch sử đã lập)")) {
-      setServices(prev => prev.filter(s => s.id !== id));
-    }
+    triggerConfirmSettings(
+      'Xóa dịch vụ mặc định',
+      'Bạn có chắc chắn muốn xóa dịch vụ này khỏi danh mục mặc định? (Sẽ không ảnh hưởng đến các Job lịch sử đã lập)',
+      () => {
+        setServices(prev => prev.filter(s => s.id !== id));
+      },
+      true
+    );
   };
 
   const handleSaveServices = () => {
@@ -302,15 +331,22 @@ export default function SettingsView() {
 
   // RESET ALL SETTINGS TO DEFAULTS
   const handleResetAllToDefaults = () => {
-    if (confirm("Bạn có chắc chắn muốn khôi phục tất cả thiết lập, danh mục dịch vụ mẫu & trạng thái về giá trị ban đầu của hệ thống?")) {
-      localStorage.removeItem('freelance_os_profile_settings');
-      localStorage.removeItem('freelance_os_services_settings');
-      localStorage.removeItem('freelance_os_templates_settings');
-      localStorage.removeItem('freelance_os_statuses_settings');
-      
-      // Reload states
-      window.location.reload();
-    }
+    triggerConfirmSettings(
+      'Khôi phục tất cả thiết lập',
+      'Bạn có chắc chắn muốn khôi phục tất cả thiết lập, danh mục dịch vụ mẫu & trạng thái về giá trị ban đầu của hệ thống?',
+      () => {
+        localStorage.removeItem('freelance_os_profile_settings');
+        localStorage.removeItem('freelance_os_services_settings');
+        localStorage.removeItem('freelance_os_templates_settings');
+        localStorage.removeItem('freelance_os_statuses_settings');
+        
+        // Reload states
+        setTimeout(() => {
+          window.location.reload();
+        }, 150);
+      },
+      true
+    );
   };
 
   return (
@@ -351,7 +387,8 @@ export default function SettingsView() {
           { id: 'profile', icon: User, label: "Thông tin Thương hiệu & Bank" },
           { id: 'services', icon: Briefcase, label: "Danh mục Đơn giá Dịch vụ" },
           { id: 'templates', icon: FileText, label: "Mẫu văn bản & Nhắc nợ" },
-          { id: 'statuses', icon: Tag, label: "Hệ thống Trạng thái" }
+          { id: 'statuses', icon: Tag, label: "Hệ thống Trạng thái" },
+          { id: 'sync', icon: Cloud, label: "Đồng bộ & Bảng tính" }
         ].map(tab => (
           <button
             key={tab.id}
@@ -1044,7 +1081,51 @@ export default function SettingsView() {
           </div>
         )}
 
+        {/* ========================================================= */}
+        {/* E. ĐỒNG BỘ GOOGLE WORSKAPCE */}
+        {/* ========================================================= */}
+        {activeSubTab === 'sync' && (
+          <SettingsSyncTab />
+        )}
+
       </div>
+
+      {/* local confirmDialog overlay */}
+      {confirmDialog && confirmDialog.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-[9999] animate-fadeIn">
+          <div className="bg-white border border-slate-200 rounded-3xl p-6 max-w-sm md:max-w-md w-full shadow-2.5xl space-y-4 text-left">
+            <div className="flex items-start gap-3">
+              <div className={`p-2 rounded-xl shrink-0 ${confirmDialog.isDanger ? 'bg-rose-50 text-rose-600 border border-rose-100' : 'bg-slate-100 text-brand-green-mid border border-slate-200'}`}>
+                {confirmDialog.isDanger ? <Trash2 size={20} /> : <Undo size={20} />}
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">{confirmDialog.title}</h4>
+                <p className="text-xs text-slate-500 leading-relaxed font-semibold">{confirmDialog.message}</p>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDialog(null)}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-xs font-bold text-slate-700 bg-white rounded-xl transition-all cursor-pointer"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                type="button"
+                onClick={confirmDialog.onConfirm}
+                className={`px-4 py-2 text-white text-xs font-bold rounded-xl active:scale-95 transition-all cursor-pointer ${
+                  confirmDialog.isDanger
+                    ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-200 shadow-md'
+                    : 'bg-brand-green-dark hover:bg-brand-green-mid shadow-slate-100 shadow-md'
+                }`}
+              >
+                Đồng ý
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

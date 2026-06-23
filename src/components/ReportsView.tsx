@@ -57,9 +57,11 @@ export default function ReportsView({
   const clientsMap = useMemo(() => new Map(clients.map(c => [c.id, c])), [clients]);
   const projectsMap = useMemo(() => new Map(projects.map(p => [p.id, p])), [projects]);
 
-  // Current mockup datetime basis
-  const todayStr = '2026-05-26';
-  const todayDate = new Date(todayStr);
+  const actualToday = new Date();
+  const getYYYYMMDD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  
+  const todayStr = getYYYYMMDD(actualToday);
+  const todayDate = actualToday;
 
   // Time range filtering utility
   const isWithinTimeRange = (dateStr: string): boolean => {

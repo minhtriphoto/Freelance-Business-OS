@@ -925,11 +925,11 @@ export default function TransactionsView({
 
       {/* DETAILED LEDGER TRANSACTION FORM MODEL */}
       {isFormOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-xl w-full shadow-xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-white rounded-2xl max-w-xl w-full shadow-xl overflow-hidden border border-slate-200 animate-in fade-in zoom-in-95 duration-150 flex flex-col max-h-[90vh]">
             
             {/* Modal Title Banner */}
-            <div className={`p-4 text-white flex items-center justify-between ${formType === 'thu' ? 'bg-emerald-700' : 'bg-rose-700'}`}>
+            <div className={`p-4 text-white flex items-center justify-between shrink-0 ${formType === 'thu' ? 'bg-emerald-700' : 'bg-rose-700'}`}>
               <div className="space-y-0.5">
                 <h3 className="text-sm font-black uppercase tracking-wider">
                   {editingTransaction ? 'Hiệu chỉnh giao dịch dòng tiền' : (formType === 'thu' ? 'Lập phiếu hạch toán khoản thu' : 'Lập phiếu hạch toán khoản chi')}
@@ -944,7 +944,7 @@ export default function TransactionsView({
               </button>
             </div>
 
-            <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleFormSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
               
               {/* Type Selector (Only editable when creating new) */}
               {!editingTransaction && (

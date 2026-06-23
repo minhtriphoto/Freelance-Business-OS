@@ -195,7 +195,7 @@ export default function ProjectsView({
   // Helper date diff calculation (using sample timeline today as May 26, 2026)
   const getDaysDiff = (dateStr?: string) => {
     if (!dateStr) return null;
-    const today = new Date('2026-05-26');
+    const today = new Date();
     today.setHours(0, 0, 0, 0);
     const target = new Date(dateStr);
     target.setHours(0, 0, 0, 0);
@@ -718,139 +718,205 @@ export default function ProjectsView({
         <>
           {/* ==================== A. VIEW MODE: TABLE ==================== */}
           {viewMode === 'table' && (
-            <div className="bg-white border border-slate-100 rounded-2xl shadow-xs overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs text-slate-700 border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
-                      <th className="py-4 px-4 w-18">Mã Job</th>
-                      <th className="py-4 px-4">Tên Job / Dịch Vụ</th>
-                      <th className="py-4 px-4">Khách Hàng</th>
-                      <th className="py-4 px-4 text-right">Giá Trị / Đã Trả</th>
-                      <th className="py-4 px-4 text-right">Số Còn Lại</th>
-                      <th className="py-4 px-4 text-center">Trạng Thái / Ưu Tiên</th>
-                      <th className="py-4 px-4">Hạn bàn giao</th>
-                      <th className="py-4 px-4 text-center">Thao Tác</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {filteredProjects.map((project) => {
-                      const client = clientsMap.get(project.clientId);
-                      const statusInfo = getProjectStatusInfo(project.status);
-                      const fin = getProjectFinancials(project);
-                      const serviceColor = getServiceColor(project.serviceType);
-                      
-                      const daysLeft = getDaysDiff(project.dueDate);
-                      const isNearDeadline = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3 && project.status !== 'hoàn thành' && project.status !== 'hủy';
-                      const isOverdue = daysLeft !== null && daysLeft < 0 && project.status !== 'hoàn thành' && project.status !== 'hủy';
-                      const isDeliveredAndUnpaid = (project.status === 'đã bàn giao' || project.status === 'delivered') && fin.remaining > 0;
+            <>
+              {/* DESKTOP TABLE VIEW */}
+              <div className="hidden md:block bg-white border border-slate-100 rounded-2xl shadow-xs overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs text-slate-700 border-collapse">
+                    <thead>
+                      <tr className="bg-slate-50 border-b border-slate-100 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                        <th className="py-4 px-4 w-18">Mã Job</th>
+                        <th className="py-4 px-4">Tên Job / Dịch Vụ</th>
+                        <th className="py-4 px-4">Khách Hàng</th>
+                        <th className="py-4 px-4 text-right">Giá Trị / Đã Trả</th>
+                        <th className="py-4 px-4 text-right">Số Còn Lại</th>
+                        <th className="py-4 px-4 text-center">Trạng Thái / Ưu Tiên</th>
+                        <th className="py-4 px-4">Hạn bàn giao</th>
+                        <th className="py-4 px-4 text-center">Thao Tác</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {filteredProjects.map((project) => {
+                        const client = clientsMap.get(project.clientId);
+                        const statusInfo = getProjectStatusInfo(project.status);
+                        const fin = getProjectFinancials(project);
+                        const serviceColor = getServiceColor(project.serviceType);
+                        
+                        const daysLeft = getDaysDiff(project.dueDate);
+                        const isNearDeadline = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3 && project.status !== 'hoàn thành' && project.status !== 'hủy';
+                        const isOverdue = daysLeft !== null && daysLeft < 0 && project.status !== 'hoàn thành' && project.status !== 'hủy';
+                        const isDeliveredAndUnpaid = (project.status === 'đã bàn giao' || project.status === 'delivered') && fin.remaining > 0;
 
-                      return (
-                        <tr key={project.id} className="hover:bg-slate-50/50 transition-colors">
-                          {/* Mã Job */}
-                          <td className="py-4 px-4 font-mono font-semibold text-slate-600">
-                            {project.contractNumber || `JOB-${project.id}`}
-                          </td>
+                        return (
+                          <tr key={project.id} className="hover:bg-slate-50/50 transition-colors">
+                            {/* Mã Job */}
+                            <td className="py-4 px-4 font-mono font-semibold text-slate-600">
+                              {project.contractNumber || `JOB-${project.id}`}
+                            </td>
 
-                          {/* Tên & dịch vụ */}
-                          <td className="py-4 px-4 max-w-xs">
-                            <span className="font-bold text-slate-900 block truncate">{project.title}</span>
-                            <span className={`text-[10px] font-medium ${serviceColor} flex items-center gap-1 mt-0.5`}>
-                              <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
-                              {project.serviceType}
-                            </span>
-                          </td>
+                            {/* Tên & dịch vụ */}
+                            <td className="py-4 px-4 max-w-xs">
+                              <span className="font-bold text-slate-900 block truncate">{project.title}</span>
+                              <span className={`text-[10px] font-medium ${serviceColor} flex items-center gap-1 mt-0.5`}>
+                                <span className="w-1.5 h-1.5 rounded-full bg-current"></span>
+                                {project.serviceType}
+                              </span>
+                            </td>
 
-                          {/* Khách hàng */}
-                          <td className="py-4 px-4">
-                            <span className="font-semibold text-slate-800 block">{client?.name || 'Khách thô'}</span>
-                            <span className="text-[10px] text-slate-400 font-mono block">{client?.phone || '-'}</span>
-                          </td>
+                            {/* Khách hàng */}
+                            <td className="py-4 px-4">
+                              <span className="font-semibold text-slate-800 block">{client?.name || 'Khách thô'}</span>
+                              <span className="text-[10px] text-slate-400 font-mono block">{client?.phone || '-'}</span>
+                            </td>
 
-                          {/* Giá trị / Đã trả */}
-                          <td className="py-4 px-4 text-right">
-                            <span className="font-bold text-slate-900 block">{formatVND(project.price)}</span>
-                            <span className="text-[10px] text-emerald-600 font-medium">Đã trả: {formatVND(fin.totalPaid)}</span>
-                          </td>
+                            {/* Giá trị / Đã trả */}
+                            <td className="py-4 px-4 text-right">
+                              <span className="font-bold text-slate-900 block">{formatVND(project.price)}</span>
+                              <span className="text-[10px] text-emerald-600 font-medium">Đã trả: {formatVND(fin.totalPaid)}</span>
+                            </td>
 
-                          {/* Công nợ còn lại */}
-                          <td className="py-4 px-4 text-right">
-                            <span className={`font-bold block ${fin.remaining > 0 ? 'text-orange-650' : 'text-slate-400'}`}>
-                              {formatVND(fin.remaining)}
-                            </span>
-                            {isDeliveredAndUnpaid && (
-                              <span className="inline-block bg-amber-100 text-amber-800 text-[8px] px-1 py-0.2 rounded font-bold uppercase mt-0.5 tracking-wide">🔥 Chưa thanh toán</span>
-                            )}
-                          </td>
-
-                          {/* Trạng thái / Ưu tiên */}
-                          <td className="py-4 px-4 text-center space-y-1">
-                            <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold border text-[9px] tracking-wide ${statusInfo.bgClass}`}>
-                              {statusInfo.label}
-                            </span>
-                            <div className="flex justify-center">
-                              {project.priority === 'cao' ? (
-                                <span className="bg-red-50 text-red-700 text-[8px] px-1.5 py-0.2 rounded font-bold uppercase">Cao</span>
-                              ) : project.priority === 'thấp' ? (
-                                <span className="bg-slate-50 text-slate-500 text-[8px] px-1.5 py-0.2 rounded font-semibold uppercase">Thấp</span>
-                              ) : (
-                                <span className="bg-indigo-50 text-indigo-700 text-[8px] px-1.5 py-0.2 rounded font-semibold uppercase">T.Bình</span>
+                            {/* Công nợ còn lại */}
+                            <td className="py-4 px-4 text-right">
+                              <span className={`font-bold block ${fin.remaining > 0 ? 'text-orange-650' : 'text-slate-400'}`}>
+                                {formatVND(fin.remaining)}
+                              </span>
+                              {isDeliveredAndUnpaid && (
+                                <span className="inline-block bg-amber-100 text-amber-800 text-[8px] px-1 py-0.2 rounded font-bold uppercase mt-0.5 tracking-wide">🔥 Chưa thanh toán</span>
                               )}
-                            </div>
-                          </td>
+                            </td>
 
-                          {/* Hạn / Warning */}
-                          <td className="py-4 px-4">
-                            <span className="font-medium text-slate-700 block">{formatDate(project.dueDate)}</span>
-                            {isOverdue && (
-                              <span className="inline-flex items-center gap-0.5 text-red-600 font-semibold text-[10px]" title="Quá hạn!">
-                                <AlertCircle size={10} /> Quá {Math.abs(daysLeft || 0)} ngày
+                            {/* Trạng thái / Ưu tiên */}
+                            <td className="py-4 px-4 text-center space-y-1">
+                              <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold border text-[9px] tracking-wide ${statusInfo.bgClass}`}>
+                                {statusInfo.label}
                               </span>
-                            )}
-                            {isNearDeadline && (
-                              <span className="inline-flex items-center gap-0.5 text-amber-600 font-semibold text-[10px] animate-pulse" title="Sắp deadline!">
-                                <AlertTriangle size={10} /> Trả trong {daysLeft} ngày
-                              </span>
-                            )}
-                          </td>
+                              <div className="flex justify-center">
+                                {project.priority === 'cao' ? (
+                                  <span className="bg-red-50 text-red-700 text-[8px] px-1.5 py-0.2 rounded font-bold uppercase">Cao</span>
+                                ) : project.priority === 'thấp' ? (
+                                  <span className="bg-slate-50 text-slate-500 text-[8px] px-1.5 py-0.2 rounded font-semibold uppercase">Thấp</span>
+                                ) : (
+                                  <span className="bg-indigo-50 text-indigo-700 text-[8px] px-1.5 py-0.2 rounded font-semibold uppercase">T.Bình</span>
+                                )}
+                              </div>
+                            </td>
 
-                          {/* Thao tác */}
-                          <td className="py-4 px-4 text-center">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <button
-                                onClick={() => setSelectedDetailProject(project)}
-                                className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
-                                title="Xem chi tiết"
-                              >
-                                <Eye size={13} />
-                              </button>
-                              <button
-                                onClick={() => openEditForm(project)}
-                                className="p-1.5 text-teal-600 hover:text-teal-900 hover:bg-teal-50 rounded-lg"
-                                title="Sửa"
-                              >
-                                <Edit2 size={13} />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (confirm(`Bạn có chắc muốn xóa Job: "${project.title}" không?`)) {
-                                    onDeleteProject(project.id);
-                                  }
-                                }}
-                                className="p-1.5 text-rose-600 hover:text-rose-900 hover:bg-rose-50 rounded-lg"
-                                title="Xóa"
-                              >
-                                <Trash2 size={13} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            {/* Hạn / Warning */}
+                            <td className="py-4 px-4">
+                              <span className="font-medium text-slate-700 block">{formatDate(project.dueDate)}</span>
+                              {isOverdue && (
+                                <span className="inline-flex items-center gap-0.5 text-red-600 font-semibold text-[10px]" title="Quá hạn!">
+                                  <AlertCircle size={10} /> Quá {Math.abs(daysLeft || 0)} ngày
+                                </span>
+                              )}
+                              {isNearDeadline && (
+                                <span className="inline-flex items-center gap-0.5 text-amber-600 font-semibold text-[10px] animate-pulse" title="Sắp deadline!">
+                                  <AlertTriangle size={10} /> Trả trong {daysLeft} ngày
+                                </span>
+                              )}
+                            </td>
+
+                            {/* Thao tác */}
+                            <td className="py-4 px-4 text-center">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  onClick={() => setSelectedDetailProject(project)}
+                                  className="p-1.5 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-lg"
+                                  title="Xem chi tiết"
+                                >
+                                  <Eye size={13} />
+                                </button>
+                                <button
+                                  onClick={() => openEditForm(project)}
+                                  className="p-1.5 text-teal-600 hover:text-teal-900 hover:bg-teal-50 rounded-lg"
+                                  title="Sửa"
+                                >
+                                  <Edit2 size={13} />
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    if (confirm(`Bạn có chắc muốn xóa Job: "${project.title}" không?`)) {
+                                      onDeleteProject(project.id);
+                                    }
+                                  }}
+                                  className="p-1.5 text-rose-600 hover:text-rose-900 hover:bg-rose-50 rounded-lg"
+                                  title="Xóa"
+                                >
+                                  <Trash2 size={13} />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+
+              {/* MOBILE CARD VIEW (Equivalent of Table but for Mobile) */}
+              <div className="md:hidden grid grid-cols-1 gap-4">
+                {filteredProjects.map((project) => {
+                  const client = clientsMap.get(project.clientId);
+                  const statusInfo = getProjectStatusInfo(project.status);
+                  const fin = getProjectFinancials(project);
+                  const serviceColor = getServiceColor(project.serviceType);
+                  
+                  const daysLeft = getDaysDiff(project.dueDate);
+                  const isNearDeadline = daysLeft !== null && daysLeft >= 0 && daysLeft <= 3 && project.status !== 'hoàn thành' && project.status !== 'hủy';
+                  const isOverdue = daysLeft !== null && daysLeft < 0 && project.status !== 'hoàn thành' && project.status !== 'hủy';
+                  const isDeliveredAndUnpaid = (project.status === 'đã bàn giao' || project.status === 'delivered') && fin.remaining > 0;
+
+                  return (
+                    <div
+                      key={project.id}
+                      className="bg-white border border-slate-100 rounded-2xl p-4 shadow-xs flex flex-col gap-3"
+                    >
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <span className="text-[10px] font-mono text-slate-400">Code: {project.contractNumber}</span>
+                          <h3 className="text-sm font-bold text-slate-900 leading-snug">{project.title}</h3>
+                          <p className={`text-[10px] font-bold ${serviceColor}`}>{project.serviceType}</p>
+                        </div>
+                        <span className={`px-2 py-0.5 rounded-full font-bold border text-[8px] uppercase tracking-wide shrink-0 ${statusInfo.bgClass}`}>
+                          {statusInfo.label}
+                        </span>
+                      </div>
+
+                      <div className="bg-slate-50 p-2.5 rounded-lg space-y-1.5 text-xs text-slate-650">
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">Khách hàng:</span>
+                          <strong className="text-slate-800 truncate pl-2">{client?.name || 'Khách thô'}</strong>
+                        </div>
+                        <div className="flex items-center justify-between border-t border-slate-100 pt-1.5">
+                          <span className="text-slate-500">Giá trị:</span>
+                          <strong className="text-slate-900">{formatVND(project.price)}</strong>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-slate-500">Còn nợ:</span>
+                          <strong className={`font-bold ${fin.remaining > 0 ? 'text-orange-650' : 'text-slate-400'}`}>{formatVND(fin.remaining)}</strong>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2 text-xs pt-1">
+                        <button
+                          onClick={() => setSelectedDetailProject(project)}
+                          className="flex-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-750 font-bold py-2 rounded-xl text-center"
+                        >
+                          Chi tiết
+                        </button>
+                        <button
+                          onClick={() => openEditForm(project)}
+                          className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-center"
+                        >
+                          Sửa
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
 
           {/* ==================== B. VIEW MODE: KANBAN ==================== */}
@@ -983,19 +1049,21 @@ export default function ProjectsView({
                 </div>
               </div>
 
-              {/* Day header */}
-              <div className="grid grid-cols-7 gap-1.5 text-center font-bold text-slate-500 text-[10px] uppercase">
-                <span>Thứ 2</span>
-                <span>Thứ 3</span>
-                <span>Thứ 4</span>
-                <span>Thứ 5</span>
-                <span>Thứ 6</span>
-                <span>Thứ 7</span>
-                <span className="text-rose-600">Chủ Nhật</span>
-              </div>
+              <div className="overflow-x-auto">
+                <div className="min-w-[700px]">
+                  {/* Day header */}
+                  <div className="grid grid-cols-7 gap-1.5 text-center font-bold text-slate-500 text-[10px] uppercase pt-4">
+                    <span>Thứ 2</span>
+                    <span>Thứ 3</span>
+                    <span>Thứ 4</span>
+                    <span>Thứ 5</span>
+                    <span>Thứ 6</span>
+                    <span>Thứ 7</span>
+                    <span className="text-rose-600">Chủ Nhật</span>
+                  </div>
 
-              {/* Grid matrix */}
-              <div className="grid grid-cols-7 gap-1.5 min-h-[420px]">
+                  {/* Grid matrix */}
+                  <div className="grid grid-cols-7 gap-1.5 min-h-[420px] mt-2">
                 {calendarDays.map((dateObj, i) => {
                   const events = dateObj.dateString ? getDayEvents(dateObj.dateString) : [];
                   
@@ -1040,6 +1108,8 @@ export default function ProjectsView({
                     </div>
                   );
                 })}
+              </div>
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-4 text-[10px] font-bold text-slate-650 justify-center pt-2.5 border-t border-slate-50">
@@ -1373,8 +1443,8 @@ export default function ProjectsView({
       {/* 11. QUICK FINANCE ACTION MODAL                           */}
       {/* ======================================================= */}
       {activeFinanceProject && (
-        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-55">
-          <div className="bg-white rounded-2xl border border-slate-100 p-6 w-full max-w-md space-y-4 relative shadow-2xl">
+        <div className="fixed inset-0 bg-slate-900/60 flex items-center justify-center p-4 z-55 overflow-y-auto">
+          <div className="bg-white rounded-2xl border border-slate-100 p-6 w-full max-w-md space-y-4 relative shadow-2xl overflow-y-auto max-h-[90vh]">
             <button 
               onClick={() => setActiveFinanceProject(null)}
               className="absolute top-4 right-4 text-slate-400 hover:text-slate-850"

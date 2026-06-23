@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { 
   Project, 
   Client, 
   Transaction, 
-  TAX_STANDARDS 
+  TAX_STANDARDS
 } from '../types';
 import { 
   formatVND, 
@@ -50,6 +50,7 @@ interface DashboardViewProps {
   transactions: Transaction[];
   onNavigate: (tab: string) => void;
   onSelectProject: (projectId: string) => void;
+  onEditProject?: (p: Project) => void;
 }
 
 export default function DashboardView({
@@ -57,13 +58,18 @@ export default function DashboardView({
   clients,
   transactions,
   onNavigate,
-  onSelectProject
+  onSelectProject,
+  onEditProject
 }: DashboardViewProps) {
   // 1. CHUẨN BỊ MỐC THỜI GIAN ĐỘNG
   // Sử dụng dữ liệu năm 2026 để khớp hoàn hảo với mockData có sẵn
-  const today = useMemo(() => {
-    // Tự động sử dụng mốc hiện tại hoặc trả về mốc mẫu chuẩn trong data là 2026-05-26
-    return new Date('2026-05-26');
+  const [today, setToday] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setToday(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const todayStr = useMemo(() => {
@@ -426,6 +432,7 @@ export default function DashboardView({
     if (activeAlertFilter === 'info') return alerts.filter(a => a.type === 'info');
     return alerts;
   }, [alerts, activeAlertFilter]);
+
 
 
   return (
